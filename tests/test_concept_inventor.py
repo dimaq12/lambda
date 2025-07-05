@@ -30,3 +30,18 @@ def test_feature_to_concept_to_rule_chain():
     rules = [n for n in graph.nodes if isinstance(n, RuleNode)]
     assert any(c.label == "Concept:foo" for c in concepts)
     assert len([r for r in rules if r.label == "Rule:foo"]) >= 2
+
+
+def test_concept_node_improves_metric():
+    _best_corr.clear()
+    graph = Graph([])
+
+    graph.add(LambdaNode("Metric", data={"foo": 0.5}))
+    baseline = _best_corr.get("foo", 0.0)
+
+    graph.add(LambdaNode("Metric", data={"foo": 0.95}))
+    concepts = [n for n in graph.nodes if isinstance(n, ConceptNode)]
+
+    assert len(concepts) >= 1
+    assert _best_corr.get("foo", 0.0) > baseline
+
