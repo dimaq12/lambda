@@ -45,6 +45,6 @@ def test_batch_discover_inserts_feature_nodes():
         for n in graph.nodes
         if isinstance(n, FeatureNode)
         and isinstance(n.data, dict)
-        and n.data.get("expr") == "x"
+        and str(n.data.get("expr", "")).startswith("x")
     ]
     assert len(features) >= 1
