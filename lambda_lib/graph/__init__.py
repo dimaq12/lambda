@@ -10,6 +10,7 @@ from typing import Iterable, List
 
 from ..core.node import LambdaNode
 from ..ops.feature_discoverer import discover_features
+from ..ops.meta_spawn import spawn_rules
 
 
 @dataclass
@@ -31,5 +32,7 @@ class Graph:
         self.nodes.append(node)
         for feature in discover_features(node):
             self.nodes.append(feature)
+        for rule in spawn_rules(node):
+            self.nodes.append(rule)
         self._check_invariants()
 
