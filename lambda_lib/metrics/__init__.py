@@ -4,3 +4,5 @@
 #@  doc: Metrics collection utilities.
 #@end
 
+from .reward import reward, RewardMetric
+
