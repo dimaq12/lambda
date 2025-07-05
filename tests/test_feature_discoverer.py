@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from lambda_lib.core.node import LambdaNode
 from lambda_lib.graph import Graph
-from lambda_lib.ops.feature_discoverer import FeatureNode, _best_accuracy
+from lambda_lib.ops.feature_discoverer import FeatureNode, _best_accuracy, _event_memory
 from lambda_lib.governance.governor import enforce_feature_limit
 
 
@@ -33,3 +33,18 @@ def test_feature_limit_governor():
     result = enforce_feature_limit(graph, limit=3)
     assert result == "pruned"
     assert len([n for n in graph.nodes if isinstance(n, FeatureNode)]) == 3
+
+
+def test_batch_discover_inserts_feature_nodes():
+    _event_memory.events.clear()
+    graph = Graph([])
+    graph.add(LambdaNode("Event", data={"x": 1, "label": 0}))
+    graph.add(LambdaNode("Event", data={"x": 2, "label": 1}))
+    features = [
+        n
+        for n in graph.nodes
+        if isinstance(n, FeatureNode)
+        and isinstance(n.data, dict)
+        and n.data.get("expr") == "x"
+    ]
+    assert len(features) >= 1

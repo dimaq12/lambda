@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 from typing import Iterable, List
 
 from ..core.node import LambdaNode
-from ..ops.feature_discoverer import discover_features
+from ..ops.feature_discoverer import discover_features, discover
+from ..ops.spawn_feature import spawn_feature
 from ..ops.meta_spawn import spawn_rules
 from ..ops.model_spawner import spawn_models
 from ..ops.concept_inventor import spawn_concepts
@@ -32,6 +33,11 @@ class Graph:
 
     def add(self, node: LambdaNode) -> None:
         self.nodes.append(node)
+        if isinstance(node.data, dict) and "label" in node.data:
+            for expr in discover([node]):
+                self.nodes.append(
+                    spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": expr}))
+                )
         for feature in discover_features(node):
             self.nodes.append(feature)
         for rule in spawn_rules(node):

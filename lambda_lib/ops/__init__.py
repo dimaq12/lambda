@@ -12,7 +12,7 @@ from .mirror import mirror_rule
 from .phase import phase_rule
 from .convolve import convolve_rule
 from .spawn import spawn_rule
-from .feature_discoverer import FeatureNode, discover_features
+from .feature_discoverer import FeatureNode, discover_features, discover
 from .spawn_feature import spawn_feature
 from .meta_spawn import RuleNode, spawn_rules
 from .refactor import RefactorOp
