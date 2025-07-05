@@ -1,7 +1,7 @@
 #@module:
 #@  version: "0.3"
 #@  layer: core
-#@  exposes: [LambdaNode]
+#@  exposes: [LambdaNode, ConceptNode]
 #@  doc: Fundamental λ entity representing a unit of meaning.
 #@end
 #@contract:
@@ -78,3 +78,12 @@ class LambdaNode:
         assert isinstance(self.links, list)
         assert all(isinstance(n, LambdaNode) for n in self.links)
         assert isinstance(self.raw, bool)
+
+
+class ConceptNode(LambdaNode):
+    """Lambda node representing an emergent concept."""
+
+    def __init__(self, name: str, correlation: float) -> None:
+        metadata = {name: correlation}
+        super().__init__(f"Concept:{name}", data=metadata, links=[])
+        self.metadata = {"correlation": correlation}
