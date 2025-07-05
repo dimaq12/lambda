@@ -67,3 +67,8 @@ class RefactorOp:
             new_nodes = [n for n in new_nodes if n.links or usage[n] > 0]
             graph.nodes = new_nodes
         return graph
+
+
+def refactor_graph(graph: 'Graph', entropy_threshold: float = 1.0) -> 'Graph':
+    """Convenience wrapper applying :class:`RefactorOp` to ``graph``."""
+    return RefactorOp(entropy_threshold)(graph)

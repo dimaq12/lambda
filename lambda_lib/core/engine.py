@@ -10,6 +10,7 @@ from ..patterns import parse_pattern
 from ..patterns.dsl import Pattern
 
 from ..graph import Graph
+from ..ops.refactor import refactor_graph
 from ..runtime.scheduler import Scheduler
 from .operation import LambdaOperation
 from .node import LambdaNode
@@ -23,10 +24,13 @@ from .node import LambdaNode
 class LambdaEngine:
     """Executes graphs of :class:`LambdaNode` operations."""
 
-    def __init__(self) -> None:
+    def __init__(self, refactor_every: int = 0, node_limit: int = 0) -> None:
         self.registry: Dict[str, LambdaOperation] = {}
         self._seen_rules: Set[LambdaNode] = set()
         self.events: list[tuple[str, str]] = []
+        self._steps = 0
+        self.refactor_every = refactor_every
+        self.node_limit = node_limit
 
     def _register_rule_ops(self, graph: Graph) -> None:
         for node in graph.nodes:
@@ -88,5 +92,13 @@ class LambdaEngine:
         scheduler = Scheduler(graph)
         scheduler.execute()
         self._register_rule_ops(graph)
+        self._steps += 1
+        if (
+            self.refactor_every
+            and self.node_limit
+            and self._steps % self.refactor_every == 0
+            and len(graph.nodes) > self.node_limit
+        ):
+            refactor_graph(graph)
         assert scheduler.state == "ready"
         return scheduler

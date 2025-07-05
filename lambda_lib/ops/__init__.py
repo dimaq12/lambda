@@ -3,7 +3,8 @@
 #@  layer: ops
 #@  exposes: [eval_rule, mirror_rule, phase_rule, convolve_rule, spawn_rule,
 #@            FeatureNode, discover_features, spawn_feature,
-#@            RuleNode, spawn_rules, RefactorOp, vote, merge_models, convolve]
+#@            RuleNode, spawn_rules, RefactorOp, refactor_graph, vote,
+#@            merge_models, convolve]
 #@  doc: Package for built‑in λ operations.
 #@end
 
@@ -15,5 +16,5 @@ from .spawn import spawn_rule
 from .feature_discoverer import FeatureNode, discover_features, discover
 from .spawn_feature import spawn_feature
 from .meta_spawn import RuleNode, spawn_rules
-from .refactor import RefactorOp
+from .refactor import RefactorOp, refactor_graph
 from .collaboration import vote, merge_models, convolve
