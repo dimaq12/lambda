@@ -3,6 +3,7 @@
     {"label": "DataStream", "data": 0, "links": []},
     {"label": "FeatureMaker", "links": [0], "raw": true},
     {"label": "Classifier", "links": [1]},
-    {"label": "Statistics", "links": [2]}
+    {"label": "Statistics", "links": [2]},
+    {"label": "FeatureDiscoverer", "links": [3]}
   ]
 }
