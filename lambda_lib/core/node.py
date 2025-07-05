@@ -14,10 +14,11 @@
 class LambdaNode:
     """Basic node in a λ graph."""
 
-    def __init__(self, label: str, data: object | None = None, links: list | None = None) -> None:
+    def __init__(self, label: str, data: object | None = None, links: list | None = None, raw: bool = False) -> None:
         self.label = label
         self.data = data
         self.links = list(links) if links is not None else []
+        self.raw = raw
         self._check_invariants()
 
     # simple alias used by some operations
@@ -39,7 +40,7 @@ class LambdaNode:
     def share(self) -> "LambdaNode":
         """Return a shallow copy of this node."""
         self._check_invariants()
-        clone = LambdaNode(self.label, self.data, self.links)
+        clone = LambdaNode(self.label, self.data, self.links, raw=self.raw)
         clone._check_invariants()
         return clone
 
@@ -54,7 +55,7 @@ class LambdaNode:
         """Return a copy tagged with ``phase``."""
         self._check_invariants()
         new_label = f"{self.label}@{phase}"
-        clone = LambdaNode(new_label, self.data, self.links)
+        clone = LambdaNode(new_label, self.data, self.links, raw=self.raw)
         clone._check_invariants()
         return clone
 
@@ -68,7 +69,7 @@ class LambdaNode:
     def mirror(self) -> "LambdaNode":
         """Return a node with links in reversed order."""
         self._check_invariants()
-        clone = LambdaNode(self.label, self.data, list(reversed(self.links)))
+        clone = LambdaNode(self.label, self.data, list(reversed(self.links)), raw=self.raw)
         clone._check_invariants()
         return clone
 
@@ -76,3 +77,4 @@ class LambdaNode:
         assert self.label is not None
         assert isinstance(self.links, list)
         assert all(isinstance(n, LambdaNode) for n in self.links)
+        assert isinstance(self.raw, bool)
