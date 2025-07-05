@@ -21,6 +21,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
         pip install pytest
+
+    - name: Run λ engine
+      run: |
+        python -m lambda_lib.cli run examples/classifier/seed.yaml --steps 2000
+
+    - name: Check reward grew
+      run: |
+        python tests/verify_reward_growth.py
     - name: Run tests
       run: pytest -q
 
