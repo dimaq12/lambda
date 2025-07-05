@@ -23,3 +23,14 @@ jobs:
         pip install pytest
     - name: Run tests
       run: pytest -q
+
+    - name: Run anomaly worker
+      run: |
+        python scripts/anomaly_worker.py | tee anomaly_report.txt
+        cat anomaly_report.txt >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload anomaly report
+      uses: actions/upload-artifact@v4
+      with:
+        name: anomaly_worker_report
+        path: anomaly_report.txt
