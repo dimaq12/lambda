@@ -47,6 +47,11 @@ def main(argv: Sequence[str]) -> int:
 
     if command == "run" and len(argv) >= 3:
         seed_file = argv[2]
+        path = Path(seed_file)
+        if not path.exists():
+            alt = Path(__file__).resolve().parent / seed_file
+            if alt.exists():
+                seed_file = str(alt)
         steps = 1
         if "--steps" in argv:
             idx = argv.index("--steps")
