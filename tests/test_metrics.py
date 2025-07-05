@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from lambda_lib.metrics.accuracy import accuracy
 from lambda_lib.metrics.gradient import gradient_norm
-from lambda_lib.metrics.reward import reward
+from lambda_lib.metrics.reward import reward, RewardMetric
 
 
 def test_accuracy_basic():
@@ -24,3 +24,12 @@ def test_reward_scaling():
     assert reward(0.5, scale=1.0) == 0.5
     assert reward(2.0, scale=1.0) == 1.0
     assert reward(-3.0, scale=1.0) == -1.0
+
+
+def test_reward_metric_history():
+    metric = RewardMetric(history=3)
+    metric.update(0.5)
+    metric.update(-0.5)
+    metric.update(0.8)
+    metric.update(0.1)
+    assert metric.history_list() == [reward(-0.5), reward(0.8), reward(0.1)]

@@ -6,6 +6,7 @@
 #@end
 
 from ..core.node import LambdaNode
+from collections import deque
 
 #@contract:
 #@  post: -1.0 <= result <= 1.0
@@ -26,12 +27,18 @@ def reward(value: float, scale: float = 1.0) -> float:
 
 
 class RewardMetric(LambdaNode):
-    """Lambda node storing a normalized reward value."""
+    """Lambda node storing a normalized reward value with history."""
 
-    def __init__(self, value: float = 0.0, scale: float = 1.0):
+    def __init__(self, value: float = 0.0, scale: float = 1.0, history: int = 1):
         super().__init__("RewardMetric", data=reward(value, scale), links=[])
         self.scale = scale
+        self.history = deque([self.data], maxlen=history)
 
     def update(self, value: float) -> None:
-        """Update node data with new normalized reward value."""
+        """Update node data with new normalized reward value and history."""
         self.data = reward(value, self.scale)
+        self.history.append(self.data)
+
+    def history_list(self) -> list:
+        """Return list of stored reward values, oldest first."""
+        return list(self.history)

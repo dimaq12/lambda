@@ -18,9 +18,11 @@ class SequenceMemory:
 
     capacity: int = 10
     events: deque = field(init=False)
+    rewards: deque = field(init=False)
 
     def __post_init__(self) -> None:
         self.events = deque(maxlen=self.capacity)
+        self.rewards = deque(maxlen=self.capacity)
 
     #@contract:
     #@  post: len(self.events) <= self.capacity
@@ -31,12 +33,22 @@ class SequenceMemory:
         self.events.append(item)
         assert len(self.events) <= self.capacity
 
+    def push_reward(self, value: float) -> None:
+        """Store ``value`` in reward history and events."""
+        self.events.append(value)
+        self.rewards.append(value)
+        assert len(self.rewards) <= self.capacity
+
     def __len__(self) -> int:
         return len(self.events)
 
     def as_list(self) -> list:
         """Return memory contents oldest first."""
         return list(self.events)
+
+    def reward_history(self) -> list:
+        """Return stored reward signals oldest first."""
+        return list(self.rewards)
 
 
 #@contract:

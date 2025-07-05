@@ -27,16 +27,17 @@ def test_n_step_reward_influences_learning():
         preds_nomem.append(p_nomem)
         p_mem = int(weight_mem > 0.5)
         preds_mem.append(p_mem)
-        if t >= 2:
-            r = 1.0 if preds_mem[t-2] == labels[t-2] else -1.0
-            memory.push(r)
+        if t >= memory.capacity:
+            r = 1.0 if preds_mem[t - memory.capacity] == labels[t - memory.capacity] else -1.0
+            memory.push_reward(r)
             weight_mem = convolve_context(weight_mem, memory, weight=0.5)
 
-    for t in range(len(labels) - 2, len(labels)):
+    for t in range(len(labels) - memory.capacity, len(labels)):
         r = 1.0 if preds_mem[t] == labels[t] else -1.0
-        memory.push(r)
+        memory.push_reward(r)
         weight_mem = convolve_context(weight_mem, memory, weight=0.5)
 
     assert weight_nomem == 0.0
     assert weight_mem != weight_nomem
+    assert len(memory.reward_history()) <= memory.capacity
 
