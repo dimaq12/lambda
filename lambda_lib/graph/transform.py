@@ -9,5 +9,10 @@
 #@  post: result is not None
 #@  assigns: []
 #@end
-def transform(graph, rule):
-    pass
+from . import Graph
+
+
+def transform(graph: Graph, rule):
+    assert callable(rule)
+    new_nodes = [rule(n) for n in graph.nodes]
+    return Graph(new_nodes)

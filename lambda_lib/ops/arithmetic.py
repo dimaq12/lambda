@@ -10,7 +10,9 @@
 #@  assigns: []
 #@end
 def add(a, b):
-    pass
+    assert isinstance(a, (int, float)) and isinstance(b, (int, float))
+    return a + b
 
 def sub(a, b):
-    pass
+    assert isinstance(a, (int, float)) and isinstance(b, (int, float))
+    return a - b
