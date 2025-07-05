@@ -33,3 +33,25 @@ def test_meta_governor_relaxes_on_low_cost():
 
     assert mg.node_limit == 2
     assert mg.rule_limit == 2
+
+
+def test_meta_governor_adjusts_feature_rule_limits():
+    graph = Graph([LambdaNode("base")])
+    mg = MetaGovernor(
+        node_limit=1,
+        rule_limit=1,
+        max_features=3,
+        max_rules=3,
+        cpu_limit=1.0,
+        ram_limit=1.0,
+        graph_limit=10,
+    )
+
+    mg.evaluate(reward=0.5, cpu=2.0, ram=2.0, graph=graph)
+    assert mg.max_features == 2
+    assert mg.max_rules == 2
+
+    mg.evaluate(reward=10.0, cpu=0.1, ram=0.1, graph=graph)
+    assert mg.max_features == 3
+    assert mg.max_rules == 3
+

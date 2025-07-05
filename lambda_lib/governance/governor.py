@@ -28,13 +28,24 @@ def enforce_node_limit(graph: Graph, limit: int) -> str:
 
 
 #@contract:
-#@  pre: limit >= 0
+#@  pre:
+#@    - limit >= 0
+#@    - max_features is None or max_features >= 0
 #@  post: result in ['ok', 'pruned']
 #@  assigns: [graph.nodes]
 #@end
-def enforce_feature_limit(graph: Graph, limit: int) -> str:
-    """Ensure no more than ``limit`` :class:`FeatureNode` exist in ``graph``."""
+def enforce_feature_limit(
+    graph: Graph, limit: int, max_features: int | None = None
+) -> str:
+    """Ensure the number of :class:`FeatureNode` objects does not exceed ``limit``.
+
+    If ``max_features`` is provided, it represents a hard cap that ``limit``
+    cannot exceed.
+    """
     assert limit >= 0
+    if max_features is not None:
+        assert max_features >= 0
+        limit = min(limit, max_features)
     features = [n for n in graph.nodes if isinstance(n, FeatureNode)]
     if len(features) > limit:
         excess = features[limit:]
@@ -47,13 +58,23 @@ def enforce_feature_limit(graph: Graph, limit: int) -> str:
 
 
 #@contract:
-#@  pre: limit >= 0
+#@  pre:
+#@    - limit >= 0
+#@    - max_rules is None or max_rules >= 0
 #@  post: result in ['ok', 'pruned']
 #@  assigns: [graph.nodes]
 #@end
-def enforce_rule_limit(graph: Graph, limit: int) -> str:
-    """Ensure no more than ``limit`` :class:`RuleNode` exist in ``graph``."""
+def enforce_rule_limit(
+    graph: Graph, limit: int, max_rules: int | None = None
+) -> str:
+    """Ensure the number of :class:`RuleNode` objects does not exceed ``limit``.
+
+    ``max_rules`` may specify an additional hard cap.
+    """
     assert limit >= 0
+    if max_rules is not None:
+        assert max_rules >= 0
+        limit = min(limit, max_rules)
     rules = [n for n in graph.nodes if isinstance(n, RuleNode)]
     if len(rules) > limit:
         excess = rules[limit:]
