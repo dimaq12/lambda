@@ -7,7 +7,7 @@
 from typing import Dict
 
 from ..graph import Graph
-from ..runtime.executor import Executor
+from ..runtime.scheduler import Scheduler
 from .operation import LambdaOperation
 #@contract:
 #@  pre: len(graph.nodes) > 0
@@ -25,7 +25,7 @@ class LambdaEngine:
     def register(self, operation: LambdaOperation) -> None:
         self.registry[operation.name] = operation
 
-    def execute(self, graph: Graph) -> Executor:
+    def execute(self, graph: Graph) -> Scheduler:
         assert len(graph.nodes) > 0
 
         # simple evaluation loop applying registered operations by name
@@ -38,7 +38,7 @@ class LambdaEngine:
             new_nodes.append(node)
         graph.nodes = new_nodes
 
-        executor = Executor(graph)
-        executor.execute()
-        assert executor.state == "ready"
-        return executor
+        scheduler = Scheduler(graph)
+        scheduler.execute()
+        assert scheduler.state == "ready"
+        return scheduler
