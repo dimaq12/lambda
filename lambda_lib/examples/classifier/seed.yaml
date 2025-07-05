@@ -1,10 +1,9 @@
 {
   "nodes": [
-    {"label": "DataStream", "data": 0, "links": []},
-    {"label": "FeatureMaker", "links": [0], "raw": true},
-    {"label": "Classifier", "links": [1]},
-    {"label": "Statistics", "links": [2]},
-    {"label": "FeatureDiscoverer", "links": [3]}
+    {"label": "Sensor", "links": []},
+    {"label": "Classifier", "links": [0]},
+    {"label": "RewardMetric", "links": [1]},
+    {"label": "Rule:spawn_feature", "data": "x -> spawn_feature(x)", "links": []}
   ],
   "governor": {"node_limit": 10, "rule_limit": 5}
- }
+}

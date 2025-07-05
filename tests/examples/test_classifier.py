@@ -9,6 +9,7 @@ from lambda_lib.examples.classifier import run
 from lambda_lib.core.engine import LambdaEngine
 from lambda_lib.core.node import LambdaNode
 from lambda_lib.core.operation import LambdaOperation
+from lambda_lib.metrics.reward import reward
 
 
 def test_classifier_example_runs():
@@ -17,29 +18,26 @@ def test_classifier_example_runs():
 
     engine = LambdaEngine()
 
-    def data_stream(node: LambdaNode) -> LambdaNode:
-        value = (node.data or 0) + 1
-        return LambdaNode("DataStream", data=value, links=node.links)
+    event = {"latency_ms": 700, "label": 1}
+    pred = None
 
-    def feature_maker(node: LambdaNode) -> LambdaNode:
-        return LambdaNode("FeatureMaker", data=node.data, links=node.links)
+    def sensor(node: LambdaNode) -> LambdaNode:
+        return LambdaNode("Sensor", data=event, links=node.links)
 
     def classifier(node: LambdaNode) -> LambdaNode:
-        return LambdaNode("Classifier", data="NORMAL", links=node.links)
+        nonlocal pred
+        pred = int(event["latency_ms"] >= 600)
+        return LambdaNode("Classifier", data=pred, links=node.links)
 
-    def statistics(node: LambdaNode) -> LambdaNode:
-        return LambdaNode("Statistics", data=node.data, links=node.links)
+    def metric(node: LambdaNode) -> LambdaNode:
+        score = reward(1.0 if pred == event["label"] else -1.0)
+        return LambdaNode("RewardMetric", data={"score": score}, links=node.links)
 
-    engine.register(LambdaOperation("DataStream", data_stream))
-    engine.register(LambdaOperation("FeatureMaker", feature_maker))
+    engine.register(LambdaOperation("Sensor", sensor))
     engine.register(LambdaOperation("Classifier", classifier))
-    engine.register(LambdaOperation("Statistics", statistics))
+    engine.register(LambdaOperation("RewardMetric", metric))
 
     scheduler = engine.execute(graph)
     assert scheduler.state == "ready"
-    # DataStream node should have incremented value
-    assert graph.nodes[0].data == 1
-    # FeatureMaker should bypass processing and carry raw data
-    assert graph.nodes[1].data == 1
-    # Classifier node should have produced NORMAL output
-    assert graph.nodes[2].data == "NORMAL"
+    assert any(n.label == "RewardMetric" for n in graph.nodes)
+    assert isinstance(graph.nodes[2].data, dict)
