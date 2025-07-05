@@ -9,3 +9,6 @@ layers:
 tools:
   verifier: true
   graph: true
+governor:
+  max_features: 5
+  max_rules: 5

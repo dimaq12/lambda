@@ -9,7 +9,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..graph import Graph
-from .governor import enforce_node_limit, enforce_rule_limit
+from .governor import (
+    enforce_node_limit,
+    enforce_rule_limit,
+    enforce_feature_limit,
+)
 
 
 @dataclass
@@ -18,6 +22,8 @@ class MetaGovernor:
 
     node_limit: int = 10
     rule_limit: int = 5
+    max_features: int = 5
+    max_rules: int = 5
     cpu_limit: float = 1.0
     ram_limit: float = 1.0
     graph_limit: int = 100
@@ -46,7 +52,15 @@ class MetaGovernor:
             self.node_limit += 1
             self.rule_limit += 1
 
+        if ratio > 1.2:
+            self.max_features += 1
+            self.max_rules += 1
+        elif ratio < 1.2:
+            self.max_features = max(1, self.max_features - 1)
+            self.max_rules = max(1, self.max_rules - 1)
+
     def govern(self, graph: Graph) -> None:
         """Apply current limits to ``graph``."""
         enforce_node_limit(graph, self.node_limit)
-        enforce_rule_limit(graph, self.rule_limit)
+        enforce_rule_limit(graph, self.rule_limit, self.max_rules)
+        enforce_feature_limit(graph, self.max_features)
