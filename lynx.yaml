@@ -1,0 +1,11 @@
+project: "LambdaLib Skeleton"
+version: "0.3"
+layers:
+  - core
+  - ops
+  - graph
+  - runtime
+  - examples
+tools:
+  verifier: true
+  graph: true
