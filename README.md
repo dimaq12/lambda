@@ -115,6 +115,16 @@ python -m lambda_lib.examples.simple_eval
 
 Contributions welcome — propose new ops as contract-only PRs and watch the system learn to implement itself!
 
+## 10 Contract Verification
+
+All modules include `#@contract` blocks written in the [LynxContract](docs/spec.lynx.md) language. Once implementations arrive, you can verify them with:
+
+```bash
+lynxctl verify
+```
+
+This command walks the source tree and checks that the declared contracts remain valid.
+
 ---
 
 © 2025 LambdaLib authors. MIT License.
