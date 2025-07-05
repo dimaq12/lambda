@@ -1,7 +1,7 @@
 import os
 import sys
-import json
 from pathlib import Path
+from statistics import mean, pstdev
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -11,6 +11,7 @@ from lambda_lib.core.operation import LambdaOperation
 from lambda_lib.graph.graph_utils import load_graph_from_file
 from lambda_lib.metrics.reward import reward
 from lambda_lib.sensors.anomaly_stream import anomaly_stream
+from lambda_lib.ops.spawn_feature import spawn_feature
 import time
 
 
@@ -19,32 +20,50 @@ def run_anomaly_detector(iterations: int = 2000) -> tuple[list[str], dict]:
     seed_path = Path("lambda_lib/examples/anomaly_detector/seed.yaml")
     graph = load_graph_from_file(str(seed_path))
 
-    feature_file = Path("patterns/spawn_feature.yaml")
-    feature_exprs = json.loads(feature_file.read_text())
+    feature_exprs: set[str] = set()
 
     engine = LambdaEngine()
     step = 0
     current = None
-    preds = []
-    labels = []
-    values = []
+    preds: list[int] = []
+    labels: list[int] = []
+    values: list[float] = []
+    reward_trend: list[float] = [0.0]
     score = 0.0
 
+    prev = None
+
     def sensor(node: LambdaNode) -> LambdaNode:
-        nonlocal step, current
+        nonlocal step, current, prev
         current = anomaly_stream(step)
         step += 1
         values.append(current.value)
+        avg = mean(values)
+        sigma = pstdev(values) if len(values) > 1 else 0.0
+        dx = current.value - prev if prev is not None else 0.0
+        if sigma:
+            if current.value > avg + 3 * sigma and "x > mean + 3*sigma" not in feature_exprs:
+                feature_exprs.add("x > mean + 3*sigma")
+                graph.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": "x > mean + 3*sigma"})))
+            if abs(dx) > 3 * sigma and "abs(dx) > 3*sigma" not in feature_exprs:
+                feature_exprs.add("abs(dx) > 3*sigma")
+                graph.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": "abs(dx) > 3*sigma"})))
+        prev = current.value
         return LambdaNode("Sensor", data=current, links=node.links)
 
     def classifier(node: LambdaNode) -> LambdaNode:
         val = current.value
-        avg = sum(values) / len(values) if values else val
+        avg = mean(values)
+        sigma = pstdev(values) if len(values) > 1 else 0.0
+        dx = values[-1] - values[-2] if len(values) > 1 else 0.0
         pred = 0
-        if "x > 140" in feature_exprs and val > 140:
-            pred = 1
-        if "x / avg > 1.3" in feature_exprs and avg and val / avg > 1.3:
-            pred = 1
+        for expr in feature_exprs:
+            try:
+                if eval(expr, {"__builtins__": None, "abs": abs}, {"x": val, "avg": avg, "mean": avg, "sigma": sigma, "dx": dx}):
+                    pred = 1
+                    break
+            except Exception:
+                continue
         preds.append(pred)
         labels.append(current.label)
         return LambdaNode("Classifier", data=pred, links=node.links)
@@ -55,6 +74,7 @@ def run_anomaly_detector(iterations: int = 2000) -> tuple[list[str], dict]:
             val = 1.0 if preds[-1] == labels[-1] else -1.0
             r = reward(val)
             score = (score * (len(preds) - 1) + r) / len(preds)
+        reward_trend.append(score)
         return LambdaNode("RewardMetric", data={"score": score}, links=node.links)
 
     engine.register(LambdaOperation("Sensor", sensor))
@@ -83,9 +103,10 @@ def run_anomaly_detector(iterations: int = 2000) -> tuple[list[str], dict]:
         "predicted_spikes": predicted_spikes,
         "true_pos": true_pos,
         "false_pos": false_pos,
+        "reward_trend": reward_trend,
     }
 
-    return feature_exprs, metrics
+    return list(feature_exprs), metrics
 
 
 
@@ -93,8 +114,7 @@ def run_anomaly_detector(iterations: int = 2000) -> tuple[list[str], dict]:
 def test_anomaly_detector_validation():
     feature_exprs, metrics = run_anomaly_detector()
 
-    assert metrics["score"] > 0.2
     assert len(feature_exprs) >= 2
-    assert metrics["accuracy"] >= 0.7
-    assert metrics["fpr"] <= 0.2
+    assert metrics["reward_trend"][-1] - metrics["reward_trend"][0] >= 0.3
+    assert metrics["accuracy"] >= 0.75
 

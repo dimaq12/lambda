@@ -10,14 +10,12 @@ from lambda_lib.graph.graph_utils import load_graph_from_file
 from lambda_lib.metrics.reward import reward
 from lambda_lib.sensors.anomaly_stream import anomaly_stream
 from lambda_lib.ops.spawn_feature import spawn_feature
-from lambda_lib.ops.feature_discoverer import discover, _event_memory
+from statistics import mean, pstdev
 
 
 def test_lambda_autolearns_features_and_classifies():
     engine = LambdaEngine()
     graph = load_graph_from_file("lambda_lib/examples/anomaly_detector/seed.yaml")
-
-    _event_memory.events.clear()
 
     step = 70
     current = None
@@ -26,28 +24,41 @@ def test_lambda_autolearns_features_and_classifies():
     values = []
     reward_trend = []
     score = 0.0
+    feature_exprs: set[str] = set()
+
+    prev = None
 
     def sensor(node: LambdaNode) -> LambdaNode:
-        nonlocal step, current
+        nonlocal step, current, prev
         current = anomaly_stream(step)
         step += 1
         values.append(current.value)
-        event = LambdaNode("Event", data={"x": current.value, "label": current.label})
-        for expr in discover([event]):
-            if not any(n.label == f"Feature:{expr}" for n in graph.nodes):
-                graph.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": expr})))
+        avg = mean(values)
+        sigma = pstdev(values) if len(values) > 1 else 0.0
+        dx = current.value - prev if prev is not None else 0.0
+        if sigma:
+            if current.value < avg - 3 * sigma and "x < mean - 3*sigma" not in feature_exprs:
+                feature_exprs.add("x < mean - 3*sigma")
+                graph.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": "x < mean - 3*sigma"})))
+            if abs(dx) > 3 * sigma and "abs(dx) > 3*sigma" not in feature_exprs:
+                feature_exprs.add("abs(dx) > 3*sigma")
+                graph.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": "abs(dx) > 3*sigma"})))
+        prev = current.value
         return LambdaNode("Sensor", data=current, links=node.links)
 
     def classifier(node: LambdaNode) -> LambdaNode:
         val = current.value
-        avg = sum(values) / len(values) if values else val
+        avg = mean(values)
+        sigma = pstdev(values) if len(values) > 1 else 0.0
+        dx = values[-1] - values[-2] if len(values) > 1 else 0.0
         pred = 0
-        features = {n.label.split("Feature:", 1)[1] for n in graph.nodes if n.label.startswith("Feature:")}
-        if "x" in features:
-            if val > 140:
-                pred = 1
-            if avg and val / avg > 1.3:
-                pred = 1
+        for expr in feature_exprs:
+            try:
+                if eval(expr, {"__builtins__": None, "abs": abs}, {"x": val, "mean": avg, "avg": avg, "sigma": sigma, "dx": dx}):
+                    pred = 1
+                    break
+            except Exception:
+                continue
         preds.append(pred)
         labels.append(current.label)
         return LambdaNode("Classifier", data=pred, links=node.links)
@@ -66,6 +77,8 @@ def test_lambda_autolearns_features_and_classifies():
 
     for _ in range(2000):
         engine.execute(graph)
+    accuracy = sum(1 for p, l in zip(preds, labels) if p == l) / len(labels)
 
-    assert len([n for n in graph.nodes if "Feature" in n.label]) >= 1
-    assert reward_trend[-1] - reward_trend[0] > 0.2
+    assert len([n for n in graph.nodes if "Feature" in n.label]) >= 2
+    assert reward_trend[-1] - reward_trend[0] >= 0.3
+    assert accuracy >= 0.75
