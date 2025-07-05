@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Iterable, List
 
 from ..core.node import LambdaNode
+from ..ops.feature_discoverer import discover_features
 
 
 @dataclass
@@ -28,5 +29,7 @@ class Graph:
 
     def add(self, node: LambdaNode) -> None:
         self.nodes.append(node)
+        for feature in discover_features(node):
+            self.nodes.append(feature)
         self._check_invariants()
 
