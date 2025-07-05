@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    {"label": "DataStream", "data": 0, "links": []},
+    {"label": "FeatureMaker", "links": [0]},
+    {"label": "Classifier", "links": [1]},
+    {"label": "Statistics", "links": [2]}
+  ]
+}
