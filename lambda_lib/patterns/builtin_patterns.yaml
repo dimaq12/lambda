@@ -1,0 +1,5 @@
+eval: "x -> eval(x)"
+mirror: "x -> x"
+tune: "x -> tuned(x)"
+vote: "x -> voted(x)"
+convolve: "x -> convolved(x)"
