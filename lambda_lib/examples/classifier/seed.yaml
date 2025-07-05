@@ -5,5 +5,6 @@
     {"label": "Classifier", "links": [1]},
     {"label": "Statistics", "links": [2]},
     {"label": "FeatureDiscoverer", "links": [3]}
-  ]
-}
+  ],
+  "governor": {"node_limit": 10, "rule_limit": 5}
+ }
