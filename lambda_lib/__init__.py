@@ -5,3 +5,5 @@
 #@  doc: Root package for λ library skeleton.
 #@end
 
+from . import patterns, sensors, memory, metrics, governance
+
