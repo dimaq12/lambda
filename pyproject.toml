@@ -1,3 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lambda-lib"
+version = "0.3.0"
+description = "Self-evolving meta-language \u03bb library skeleton."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "LambdaLib authors"}]
+license = {text = "MIT"}
+# no external dependencies yet
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lambda_lib*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-vv"

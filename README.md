@@ -97,9 +97,10 @@ The library provides only the **patterns** (`tune`, `vote`, `convolve`, `mirror`
 
 ---
 
-## 8 Getting Started (when code arrives)
+## 8 Getting Started
+Install the package from PyPI and run one of the included examples:
 ```bash
-pip install lambda-lib  # TODO once published
+pip install lambda-lib
 python -m lambda_lib.examples.simple_eval
 ```
 *Until implementation lands, explore the contracts to understand the planned behaviour.*
