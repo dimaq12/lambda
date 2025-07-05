@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from lambda_lib.sensors.file_tail import tail_file
 from lambda_lib.sensors.http_stream import http_stream
+from urllib.error import URLError
 
 
 def test_tail_file(tmp_path):
@@ -35,7 +36,7 @@ def test_http_stream(monkeypatch):
     assert res.new_data == "data"
 
     def raising(url):
-        raise Exception("fail")
+        raise URLError("fail")
 
     monkeypatch.setattr("lambda_lib.sensors.http_stream.urlopen", raising)
     res2 = http_stream("http://example.com")
