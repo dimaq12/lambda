@@ -29,6 +29,49 @@ class LambdaNode:
         self.links.append(node)
         self._check_invariants()
 
+    #@contract:
+    #@  inv:
+    #@    - self.label is not None
+    #@    - isinstance(self.links, list)
+    #@    - forall n in self.links: isinstance(n, LambdaNode)
+    #@  assigns: [self.data, self.links]
+    #@end
+    def share(self) -> "LambdaNode":
+        """Return a shallow copy of this node."""
+        self._check_invariants()
+        clone = LambdaNode(self.label, self.data, self.links)
+        clone._check_invariants()
+        return clone
+
+    #@contract:
+    #@  inv:
+    #@    - self.label is not None
+    #@    - isinstance(self.links, list)
+    #@    - forall n in self.links: isinstance(n, LambdaNode)
+    #@  assigns: [self.data, self.links]
+    #@end
+    def clone(self, phase: str) -> "LambdaNode":
+        """Return a copy tagged with ``phase``."""
+        self._check_invariants()
+        new_label = f"{self.label}@{phase}"
+        clone = LambdaNode(new_label, self.data, self.links)
+        clone._check_invariants()
+        return clone
+
+    #@contract:
+    #@  inv:
+    #@    - self.label is not None
+    #@    - isinstance(self.links, list)
+    #@    - forall n in self.links: isinstance(n, LambdaNode)
+    #@  assigns: [self.data, self.links]
+    #@end
+    def mirror(self) -> "LambdaNode":
+        """Return a node with links in reversed order."""
+        self._check_invariants()
+        clone = LambdaNode(self.label, self.data, list(reversed(self.links)))
+        clone._check_invariants()
+        return clone
+
     def _check_invariants(self) -> None:
         assert self.label is not None
         assert isinstance(self.links, list)
