@@ -105,6 +105,23 @@ python -m lambda_lib.examples.simple_eval
 ```
 *Until implementation lands, explore the contracts to understand the planned behaviour.*
 
+### Quick-start: FeatureDiscoverer
+```python
+from lambda_lib.core.node import LambdaNode
+from lambda_lib.graph import Graph
+from lambda_lib.ops.feature_discoverer import discover
+from lambda_lib.ops.spawn_feature import spawn_feature
+
+g = Graph([])
+g.add(LambdaNode("Event", data={"latency_ms": 100, "label": 0}))
+g.add(LambdaNode("Event", data={"latency_ms": 400, "label": 1}))
+
+for expr in discover([n for n in g.nodes if n.label == "Event"]):
+    g.add(spawn_feature(LambdaNode("FeatureDiscoverer", data={"expr": expr})))
+
+print([n.label for n in g.nodes if n.label.startswith("Feature:")])
+```
+
 ---
 
 ## 9 Roadmap
