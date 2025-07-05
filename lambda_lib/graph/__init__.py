@@ -11,6 +11,7 @@ from typing import Iterable, List
 from ..core.node import LambdaNode
 from ..ops.feature_discoverer import discover_features
 from ..ops.meta_spawn import spawn_rules
+from ..ops.model_spawner import spawn_models
 
 
 @dataclass
@@ -34,5 +35,7 @@ class Graph:
             self.nodes.append(feature)
         for rule in spawn_rules(node):
             self.nodes.append(rule)
+        for model in spawn_models(node):
+            self.nodes.append(model)
         self._check_invariants()
 

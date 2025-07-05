@@ -10,6 +10,7 @@ import random
 from typing import Iterable, Sequence
 
 from ..graph import Graph
+from ..ops.model_spawner import ModelNode, spawn_models
 
 
 class Scheduler:
@@ -35,6 +36,19 @@ class Scheduler:
     #@end
     def execute(self) -> Graph:
         assert self.graph is not None
+        # spawn new models from node data
+        for node in list(self.graph.nodes):
+            for model in spawn_models(node):
+                self.graph.add(model)
+
+        # train or execute existing model graphs
+        for idx, node in enumerate(self.graph.nodes):
+            if isinstance(node, ModelNode) and isinstance(node.data, Graph):
+                if node.data.nodes:
+                    feat = self.graph.nodes[idx - 1].data if idx > 0 else None
+                    node.data.nodes[0].data = feat
+                node.engine.execute(node.data)
+
         self.state = "ready"
         return self.graph
 
