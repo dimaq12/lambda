@@ -11,9 +11,11 @@ from lambda_lib.core.operation import LambdaOperation
 from lambda_lib.graph.graph_utils import load_graph_from_file
 from lambda_lib.metrics.reward import reward
 from lambda_lib.sensors.anomaly_stream import anomaly_stream
+import time
 
 
-def test_anomaly_detector_validation():
+def run_anomaly_detector(iterations: int = 2000) -> tuple[list[str], dict]:
+    """Run anomaly detector training and return feature list and metrics."""
     seed_path = Path("lambda_lib/examples/anomaly_detector/seed.yaml")
     graph = load_graph_from_file(str(seed_path))
 
@@ -59,8 +61,10 @@ def test_anomaly_detector_validation():
     engine.register(LambdaOperation("Classifier", classifier))
     engine.register(LambdaOperation("RewardMetric", metric))
 
-    for _ in range(2000):
+    start = time.perf_counter()
+    for _ in range(iterations):
         engine.execute(graph)
+    duration = time.perf_counter() - start
 
     true_spikes = sum(labels)
     predicted_spikes = sum(preds)
@@ -69,7 +73,28 @@ def test_anomaly_detector_validation():
     accuracy = sum(1 for p, l in zip(preds, labels) if p == l) / len(labels)
     fpr = false_pos / (len(labels) - true_spikes)
 
-    assert score > 0.2
+    metrics = {
+        "score": score,
+        "accuracy": accuracy,
+        "fpr": fpr,
+        "duration": duration,
+        "graph_nodes": [n.label for n in graph.nodes],
+        "true_spikes": true_spikes,
+        "predicted_spikes": predicted_spikes,
+        "true_pos": true_pos,
+        "false_pos": false_pos,
+    }
+
+    return feature_exprs, metrics
+
+
+
+
+def test_anomaly_detector_validation():
+    feature_exprs, metrics = run_anomaly_detector()
+
+    assert metrics["score"] > 0.2
     assert len(feature_exprs) >= 2
-    assert accuracy >= 0.7
-    assert fpr <= 0.2
+    assert metrics["accuracy"] >= 0.7
+    assert metrics["fpr"] <= 0.2
+
