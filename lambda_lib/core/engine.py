@@ -27,6 +27,17 @@ class LambdaEngine:
 
     def execute(self, graph: Graph) -> Executor:
         assert len(graph.nodes) > 0
+
+        # simple evaluation loop applying registered operations by name
+        graph.state = "running"
+        new_nodes = []
+        for node in graph.nodes:
+            operation = self.registry.get(node.label)
+            if operation is not None:
+                node = operation(node)
+            new_nodes.append(node)
+        graph.nodes = new_nodes
+
         executor = Executor(graph)
         executor.execute()
         assert executor.state == "ready"
