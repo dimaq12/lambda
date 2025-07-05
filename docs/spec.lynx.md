@@ -206,4 +206,73 @@ to the top of any contract block to declare compliance.
 
 ---
 
+## 13 Concurrency Contracts (Go-specific)
+
+LynxContract supports documenting **goroutines, channels, and shared concurrency semantics** to increase visibility and reduce synchronization errors.
+
+### 13·1 Concurrency Keys (in `contract`, `flow`, or `module` blocks)
+| Key            | Type       | Description |
+|----------------|------------|-------------|
+| `spawns`       | list       | Functions or closures launched as goroutines (`go func() { ... }`). |
+| `receives_from`| list       | Channels (typed or named) that this function reads from. |
+| `sends_to`     | list       | Channels that this function writes to. |
+| `synchronized` | bool       | Declares that access to shared state is properly locked or atomic. |
+| `shared_state` | list       | Global/shared values accessed concurrently. |
+
+These may appear inside any `//@contract:` or `//@flow:` block.
+
+---
+
+### 13·2 Examples
+
+```go
+//@contract:
+//@  pre: len(data) > 0
+//@  post: result == nil
+//@  spawns: [processChunk]
+//@  sends_to: [results]
+//@  synchronized: false
+func ParallelMap(data []int, results chan<- int) error {
+    for _, item := range data {
+        go processChunk(item, results)
+    }
+    return nil
+}
+```
+
+```go
+//@flow:
+//@  from: queue.jobs
+//@  through:
+//@    - WorkerLoop
+//@    - handleJob -> db.jobs
+//@  to: event.JobFinished
+//@  concurrency:
+//@    receives_from: [jobs]
+//@    sends_to: [events]
+//@    shared_state: [jobDB, jobCache]
+func WorkerLoop() { ... }
+```
+
+---
+
+### 13·3 Static Analysis Possibilities
+- Goroutine lifecycle tracking
+- Fan-out/fan-in pattern identification
+- Deadlock or leak pattern detection
+- Race-prone `shared_state` flagging
+- Safe use of unbuffered/buffered channels
+
+---
+
+## 14 Versioning Update
+This extension updates the spec to version **0.3**.
+Use:
+```yaml
+version: "0.3"
+```
+in any annotated block to indicate compliance with concurrency rules.
+
+---
+
 © 2025 LynxContract Authors. MIT License.
