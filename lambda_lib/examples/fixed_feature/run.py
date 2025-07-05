@@ -16,7 +16,7 @@ from ...metrics.accuracy import accuracy
 from ...models.classifier import RuleBasedClassifier
 
 
-def build_graph(samples: List[Dict], threshold: int = 1000) -> Tuple[LambdaEngine, Graph, List[int], List[int]]:
+def build_graph(samples: List[Dict], threshold: int = 1000, raw: bool = False) -> Tuple[LambdaEngine, Graph, List[int], List[int]]:
     """Return engine, graph and histories for predictions and labels."""
     idx = 0
     current_event: Dict | None = None
@@ -26,20 +26,23 @@ def build_graph(samples: List[Dict], threshold: int = 1000) -> Tuple[LambdaEngin
     model = RuleBasedClassifier(threshold)
 
     def sensor(node: LambdaNode) -> LambdaNode:
-        nonlocal idx, current_event
+        nonlocal idx, current_event, features
         current_event = samples[idx] if idx < len(samples) else None
         idx += 1
+        if raw:
+            features = current_event
         return LambdaNode("Sensor", data=current_event, links=node.links)
 
     def feature_maker(node: LambdaNode) -> LambdaNode:
         nonlocal features
-        if current_event is None:
-            features = None
-        else:
-            features = {
-                "latency_ms": current_event.get("latency_ms", 0),
-                "label": current_event.get("label", 0),
-            }
+        if not raw:
+            if current_event is None:
+                features = None
+            else:
+                features = {
+                    "latency_ms": current_event.get("latency_ms", 0),
+                    "label": current_event.get("label", 0),
+                }
         return LambdaNode("FeatureMaker", data=features, links=node.links)
 
     def model_op(node: LambdaNode) -> LambdaNode:
@@ -62,7 +65,7 @@ def build_graph(samples: List[Dict], threshold: int = 1000) -> Tuple[LambdaEngin
 
     graph = Graph([
         LambdaNode("Sensor"),
-        LambdaNode("FeatureMaker"),
+        LambdaNode("FeatureMaker", raw=raw),
         LambdaNode("Model"),
         LambdaNode("AccuracyMetric"),
     ])

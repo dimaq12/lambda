@@ -28,7 +28,7 @@ def load_graph(path: str) -> Graph:
     data = _load(path)
     nodes: list[LambdaNode] = []
     for spec in data.get("nodes", []):
-        node = LambdaNode(spec["label"], spec.get("data"), [])
+        node = LambdaNode(spec["label"], spec.get("data"), [], raw=spec.get("raw", False))
         nodes.append(node)
     # resolve links by index
     for node, spec in zip(nodes, data.get("nodes", [])):

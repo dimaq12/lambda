@@ -9,6 +9,7 @@ from typing import Dict
 from ..graph import Graph
 from ..runtime.scheduler import Scheduler
 from .operation import LambdaOperation
+from .node import LambdaNode
 #@contract:
 #@  pre: len(graph.nodes) > 0
 #@  post:
@@ -31,9 +32,12 @@ class LambdaEngine:
         # simple evaluation loop applying registered operations by name
         graph.state = "running"
         new_nodes = []
-        for node in graph.nodes:
+        for idx, node in enumerate(graph.nodes):
             operation = self.registry.get(node.label)
-            if operation is not None:
+            if node.raw and node.label == "FeatureMaker":
+                prev_data = new_nodes[idx - 1].data if idx > 0 else None
+                node = LambdaNode(node.label, data=prev_data, links=node.links, raw=node.raw)
+            elif operation is not None:
                 node = operation(node)
             new_nodes.append(node)
         graph.nodes = new_nodes

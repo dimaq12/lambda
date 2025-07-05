@@ -39,5 +39,7 @@ def test_classifier_example_runs():
     assert scheduler.state == "ready"
     # DataStream node should have incremented value
     assert graph.nodes[0].data == 1
+    # FeatureMaker should bypass processing and carry raw data
+    assert graph.nodes[1].data == 1
     # Classifier node should have produced NORMAL output
     assert graph.nodes[2].data == "NORMAL"

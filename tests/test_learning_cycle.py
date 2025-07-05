@@ -106,3 +106,50 @@ def test_learning_cycle_self_modifies():
     assert "Classifier#1" in classifier_labels
     assert any(v >= 0.7 for v in accuracy_values.values())
     assert any(n.label == "Metric" for n in graph.nodes)
+
+
+def test_raw_mode_executes():
+    samples = [
+        {"latency_ms": 100, "label": 0},
+        {"latency_ms": 700, "label": 1},
+    ]
+    idx = 0
+    current_event = None
+    preds: list[int] = []
+    labels: list[int] = []
+
+    def sensor(node: LambdaNode) -> LambdaNode:
+        nonlocal idx, current_event
+        current_event = samples[idx] if idx < len(samples) else None
+        idx += 1
+        return LambdaNode("Sensor", data=current_event, links=node.links)
+
+    def feature_maker(node: LambdaNode) -> LambdaNode:
+        return LambdaNode("FeatureMaker", data=current_event, links=node.links)
+
+    def model(node: LambdaNode) -> LambdaNode:
+        if current_event:
+            pred = int(current_event["latency_ms"] >= 500)
+            preds.append(pred)
+            labels.append(current_event["label"])
+        else:
+            pred = None
+        return LambdaNode("Model", data=pred, links=node.links)
+
+    engine = LambdaEngine()
+    engine.register(LambdaOperation("Sensor", sensor))
+    engine.register(LambdaOperation("FeatureMaker", feature_maker))
+    engine.register(LambdaOperation("Model", model))
+
+    graph = Graph([
+        LambdaNode("Sensor"),
+        LambdaNode("FeatureMaker", raw=True),
+        LambdaNode("Model"),
+    ])
+
+    for _ in samples:
+        scheduler = engine.execute(graph)
+        assert scheduler.state == "ready"
+
+    assert preds == [0, 1]
+    assert labels == [0, 1]
