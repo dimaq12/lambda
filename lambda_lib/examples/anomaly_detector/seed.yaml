@@ -1,0 +1,7 @@
+{
+  "nodes": [
+    {"label": "Sensor", "links": []},
+    {"label": "Classifier", "links": [0]},
+    {"label": "RewardMetric", "links": [1]}
+  ]
+}
