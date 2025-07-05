@@ -12,5 +12,24 @@
 #@  assigns: [self.data, self.links]
 #@end
 class LambdaNode:
-    """Skeleton entity."""
-    pass
+    """Basic node in a λ graph."""
+
+    def __init__(self, label: str, data: object | None = None, links: list | None = None) -> None:
+        self.label = label
+        self.data = data
+        self.links = list(links) if links is not None else []
+        self._check_invariants()
+
+    # simple alias used by some operations
+    @property
+    def name(self) -> str:
+        return self.label
+
+    def add_link(self, node: "LambdaNode") -> None:
+        self.links.append(node)
+        self._check_invariants()
+
+    def _check_invariants(self) -> None:
+        assert self.label is not None
+        assert isinstance(self.links, list)
+        assert all(isinstance(n, LambdaNode) for n in self.links)

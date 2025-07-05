@@ -4,6 +4,11 @@
 #@  exposes: [LambdaEngine]
 #@  doc: Executes λ graphs defined by nodes & operations.
 #@end
+from typing import Dict
+
+from ..graph import Graph
+from ..runtime.executor import Executor
+from .operation import LambdaOperation
 #@contract:
 #@  pre: len(graph.nodes) > 0
 #@  post:
@@ -12,5 +17,17 @@
 #@  assigns: [self.registry]
 #@end
 class LambdaEngine:
-    """Skeleton engine."""
-    pass
+    """Executes graphs of :class:`LambdaNode` operations."""
+
+    def __init__(self) -> None:
+        self.registry: Dict[str, LambdaOperation] = {}
+
+    def register(self, operation: LambdaOperation) -> None:
+        self.registry[operation.name] = operation
+
+    def execute(self, graph: Graph) -> Executor:
+        assert len(graph.nodes) > 0
+        executor = Executor(graph)
+        executor.execute()
+        assert executor.state == "ready"
+        return executor

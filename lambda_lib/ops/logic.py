@@ -10,4 +10,5 @@
 #@  assigns: []
 #@end
 def logical_and(p, q):
-    pass
+    assert isinstance(p, bool) and isinstance(q, bool)
+    return p and q
