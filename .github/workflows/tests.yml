@@ -21,6 +21,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
         pip install pytest
+
+    - name: Run λ engine
+      run: |
+        python -m lambda_lib.cli run examples/classifier/seed.yaml --steps 2000
+
+    - name: Check reward grew
+      run: |
+        python tests/verify_reward_growth.py
     - name: Run tests
       run: pytest -q
 
@@ -29,8 +37,19 @@ jobs:
         python scripts/anomaly_worker.py | tee anomaly_report.txt
         cat anomaly_report.txt >> $GITHUB_STEP_SUMMARY
 
+    - name: Run anomaly autolearn test
+      run: |
+        pytest -v tests/test_anomaly_autolearn.py | tee autolearn_report.txt
+        cat autolearn_report.txt >> $GITHUB_STEP_SUMMARY
+
     - name: Upload anomaly report
       uses: actions/upload-artifact@v4
       with:
         name: anomaly_worker_report
         path: anomaly_report.txt
+
+    - name: Upload autolearn report
+      uses: actions/upload-artifact@v4
+      with:
+        name: autolearn_test_report
+        path: autolearn_report.txt
