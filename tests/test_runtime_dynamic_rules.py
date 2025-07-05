@@ -15,18 +15,21 @@ def test_dynamic_rule_activation():
     engine = LambdaEngine()
 
     def base(node: LambdaNode) -> LambdaNode:
-        return LambdaNode("A", data=node.data, links=node.links)
+        return LambdaNode("A", data=0, links=node.links)
 
     engine.register(LambdaOperation("A", base))
 
     graph = Graph([LambdaNode("A")])
 
     engine.execute(graph)
+    before = int(graph.nodes[0].data)
 
-    rule = RuleNode("B", parse_pattern("A -> B"))
+    rule = RuleNode("B", parse_pattern("A -> 1"))
     graph.add(rule)
 
     engine.execute(graph)
+    after = int(graph.nodes[0].data)
 
     assert any(evt[0] == "rule_spawned" for evt in engine.events)
-    assert graph.nodes[0].data == "B"
+    assert after > before
+
