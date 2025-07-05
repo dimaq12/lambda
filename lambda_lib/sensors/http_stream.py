@@ -28,7 +28,7 @@ def http_stream(url: str) -> HTTPStreamResult:
     try:
         with urlopen(url) as resp:
             data = resp.read().decode("utf-8")
-    except Exception:
+    except URLError:
         data = ""
     result = HTTPStreamResult(new_data=data)
     assert result.new_data is not None
